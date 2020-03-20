@@ -9,6 +9,8 @@ import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
 
 import java.util.Timer;
@@ -25,7 +27,7 @@ public class Myview extends View {
     private Resources resources;
     private Paint paint;
     private  int viewW,viewH;
-    private  float ballw,ballh,ballx,bally;
+    private  float ballw,ballh,ballx,bally,dx,dy;
     private boolean isinit;
     private Timer timer;
     public Myview(Context context) {
@@ -45,7 +47,9 @@ public class Myview extends View {
         timer = new Timer();
         //這樣終於拿到球了
         ballBmp = BitmapFactory.decodeResource(resources,R.drawable.pokeball);
-        timer.schedule(new BallTack(),1000,100);
+        timer.schedule(new BallTack(),1000,30);//球的移動畫面更新
+        timer.schedule(new RefreshView(),0,17);//view的畫面更新
+        //                                            60FPS  1000/60 =16.6
     }
     //目的讓他只抓一次寬高即可
     private void init(){
@@ -64,6 +68,50 @@ public class Myview extends View {
                 ballBmp.getWidth(),ballBmp.getHeight(),matrix,false);
 //        matrix.reset();
         ballx = bally =100;//給予初始球的位置
+        dx =dy = 20;//ball的移動距離
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        float ex = event.getX(),ey = event.getY();
+        if (ex>=1567&&ex<=2000&&ey>=650&&ey<=1000){//右下角給予按鈕寫法
+            if (event.getAction() ==MotionEvent.ACTION_DOWN){
+
+            }else if (event.getAction() ==MotionEvent.ACTION_MOVE){
+
+            }else if(event.getAction() == MotionEvent.ACTION_UP){
+
+            }
+        }
+//        return gd.onTouchEvent(event);//手勢偵測
+        return true;
+    }
+
+    private class MyGDListenner extends GestureDetector.SimpleOnGestureListener{
+        @Override
+        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+            Log.v("brad",velocityX+"x"+velocityY);
+            if (Math.abs(velocityX)>Math.abs(velocityY)){
+                //左右
+                //0太敏感,使用100
+                if (velocityX>100){
+                    //右
+                }
+                if (velocityX<100){
+                    //左
+                }
+            }
+            if (Math.abs(velocityX)<Math.abs(velocityY)){
+                //上下
+                if (velocityY>100){
+                    //下
+                }
+                if (velocityY<100){
+                    //上
+                }
+            }
+            return super.onFling(e1, e2, velocityX, velocityY);
+        }
     }
 
     //保持原則,畫圖的時候再去畫,如果要寫邏輯運算的話在其他地方寫
@@ -81,14 +129,26 @@ public class Myview extends View {
 
 
     }
-
+    private  class RefreshView extends TimerTask{
+        @Override
+        public void run() {
+            postInvalidate();
+        }
+    }
     //時間到要做的事
     private  class BallTack extends TimerTask{
         @Override
-        public void run() {
-            ballx+= 10;
-            bally+= 10;
+        public void run() {//碰到牆壁回彈
+            if (ballx<0||ballx+ballw>viewW){
+               dx*=-1;//將位置變成負的就回彈了
+            }
+            if (bally<0||bally+ballh>viewH){
+                dy*=-1;
+            }
+            ballx+= dx;
+            bally+= dy;
             postInvalidate();
+
         }
     }
 }
